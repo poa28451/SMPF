@@ -48,13 +48,13 @@ public abstract class AbstractOrderedItemset extends AbstractItemset{
 	 * @param position the position of the item to be returned
 	 * @return the item
 	 */
-	public abstract Integer get(int position);
+	public abstract String get(int position);
 
 	/**
 	 * Get the last item.
 	 * @return the last item.
 	 */
-	public Integer getLastItem() {
+	public String getLastItem() {
 		return get(size() - 1);
 	}
 	
@@ -93,11 +93,11 @@ public abstract class AbstractOrderedItemset extends AbstractItemset{
 	 * @param item  the item
 	 * @return true if the item is contained in this itemset
 	 */
-	public boolean contains(Integer item) {
+	public boolean contains(String item) {
 		for (int i=0; i< size(); i++) {
 			if (get(i).equals(item)) {
 				return true;
-			} else if (get(i) > item) {
+			} else if (get(i).compareTo(item) > 0) {
 				return false;
 			}
 		}
@@ -137,7 +137,7 @@ public abstract class AbstractOrderedItemset extends AbstractItemset{
 				}// if the current item in this itemset is larger than 
 				// the current item from itemset2, we return false
 				// because the itemsets are assumed to be lexically ordered.
-				else if(get(i) > itemset2.get(j)){
+				else if(get(i).compareTo(itemset2.get(j)) > 0){
 					return false;
 				}
 				
@@ -179,7 +179,7 @@ public abstract class AbstractOrderedItemset extends AbstractItemset{
 	 * @param an itemset
 	 * @return true or false
 	 */
-	public boolean isEqualTo(int[] itemset) {
+	public boolean isEqualTo(String[] itemset) {
 		// If they don't contain the same number of items, we return false
 		if (this.size() != itemset.length) {
 			return false;
@@ -187,7 +187,7 @@ public abstract class AbstractOrderedItemset extends AbstractItemset{
 		// We compare each item one by one from i to size - 1.
 		for (int i = 0; i < itemset.length; i++) {
 			// if different, return false
-			if (itemset[i] != this.get(i)) {
+			if (!itemset[i].equals(this.get(i))) {
 				return false;
 			}
 		}
@@ -226,7 +226,7 @@ public abstract class AbstractOrderedItemset extends AbstractItemset{
 	* this method return the last item of itemset2. Otherwise it returns null.
 	* @return the last item of itemset2, otherwise, null.
 	* */
-	public Integer allTheSameExceptLastItem(AbstractOrderedItemset itemset2) {
+	public String allTheSameExceptLastItem(AbstractOrderedItemset itemset2) {
 		// if these itemsets do not have the same size,  return null
 		if(itemset2.size() != this.size()){
 			return null;
@@ -238,7 +238,7 @@ public abstract class AbstractOrderedItemset extends AbstractItemset{
 				// We check if the item from this itemset is be smaller (lexical order) 
 				// and different from the one of itemset2.
 				// If not, return null.
-				if(this.get(i) >= itemset2.get(i)){  
+				if(this.get(i).compareTo(itemset2.get(i)) >= 0){  
 					return null;
 				}
 			}

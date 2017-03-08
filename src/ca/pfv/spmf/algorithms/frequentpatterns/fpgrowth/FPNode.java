@@ -32,7 +32,7 @@ import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
  * @author Philippe Fournier-Viger
  */
 public class FPNode {
-	int itemID = -1;  // item id
+	String itemID = "-1";  // item id
 	int counter = 1;  // frequency counter  (a.k.a. support)
 	
 	// the parent node of that node or null if it is the root
@@ -53,11 +53,11 @@ public class FPNode {
 	 * Return the immediate child of this node having a given ID.
 	 * If there is no such child, return null;
 	 */
-	FPNode getChildWithID(int id) {
+	FPNode getChildWithID(String id) {
 		// for each child node
 		for(FPNode child : childs){
 			// if the id is the one that we are looking for
-			if(child.itemID == id){
+			if(child.itemID.equals(id)){
 				// return that node
 				return child;
 			}

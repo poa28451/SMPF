@@ -28,7 +28,7 @@ import ca.pfv.spmf.patterns.AbstractOrderedItemset;
  */
 public class Itemset extends AbstractOrderedItemset{
 	/** the array of items **/
-	public int[] itemset; 
+	public String[] itemset; 
 
 	/**  the support of this itemset */
 	public int support = 0; 
@@ -37,7 +37,7 @@ public class Itemset extends AbstractOrderedItemset{
 	 * Get the items as array
 	 * @return the items
 	 */
-	public int[] getItems() {
+	public String[] getItems() {
 		return itemset;
 	}
 	
@@ -45,22 +45,22 @@ public class Itemset extends AbstractOrderedItemset{
 	 * Constructor
 	 */
 	public Itemset(){
-		itemset = new int[]{};
+		itemset = new String[]{};
 	}
 	
 	/**
 	 * Constructor 
 	 * @param item an item that should be added to the new itemset
 	 */
-	public Itemset(int item){
-		itemset = new int[]{item};
+	public Itemset(String item){
+		itemset = new String[]{item};
 	}
 
 	/**
 	 * Constructor 
 	 * @param items an array of items that should be added to the new itemset
 	 */
-	public Itemset(int [] items){
+	public Itemset(String [] items){
 		this.itemset = items;
 	}
 	
@@ -69,11 +69,11 @@ public class Itemset extends AbstractOrderedItemset{
 	 * @param items a list of Integer representing items in the itemset
 	 * @param support the support of the itemset
 	 */
-	public Itemset(List<Integer> itemset, int support){
-		this.itemset = new int[itemset.size()];
+	public Itemset(List<String> itemset, int support){
+		this.itemset = new String[itemset.size()];
 	    int i = 0;
-	    for (Integer item : itemset) { 
-	    	this.itemset[i++] = item.intValue();
+	    for (String item : itemset) { 
+	    	this.itemset[i++] = item;
 	    }
 	    this.support = support;
 	}
@@ -95,7 +95,7 @@ public class Itemset extends AbstractOrderedItemset{
 	/**
 	 * Get the item at a given position in this itemset
 	 */
-	public Integer get(int position) {
+	public String get(int position) {
 		return itemset[position];
 	}
 
@@ -120,14 +120,14 @@ public class Itemset extends AbstractOrderedItemset{
 	 * @param itemToRemove the given item
 	 * @return the copy
 	 */
-	public Itemset cloneItemSetMinusOneItem(Integer itemToRemove) {
+	public Itemset cloneItemSetMinusOneItem(String itemToRemove) {
 		// create the new itemset
-		int[] newItemset = new int[itemset.length -1];
+		String[] newItemset = new String[itemset.length -1];
 		int i=0;
 		// for each item in this itemset
 		for(int j =0; j < itemset.length; j++){
 			// copy the item except if it is the item that should be excluded
-			if(itemset[j] != itemToRemove){
+			if(!itemset[j].equals(itemToRemove)){
 				newItemset[i++] = itemset[j];
 			}
 		}
@@ -142,7 +142,7 @@ public class Itemset extends AbstractOrderedItemset{
 	 */
 	public Itemset cloneItemSetMinusAnItemset(Itemset itemsetToNotKeep) {
 		// create a new itemset
-		int[] newItemset = new int[itemset.length - itemsetToNotKeep.size()];
+		String[] newItemset = new String[itemset.length - itemsetToNotKeep.size()];
 		int i=0;
 		// for each item of this itemset
 		for(int j =0; j < itemset.length; j++){
@@ -161,7 +161,7 @@ public class Itemset extends AbstractOrderedItemset{
 	 * @return the new itemset
 	 */
 	public Itemset intersection(Itemset itemset2) {
-		int [] intersection = ArraysAlgos.intersectTwoSortedArrays(this.getItems(), itemset2.getItems());
+		String [] intersection = ArraysAlgos.intersectTwoSortedArrays(this.getItems(), itemset2.getItems());
 		return new Itemset(intersection);
 	}
 }

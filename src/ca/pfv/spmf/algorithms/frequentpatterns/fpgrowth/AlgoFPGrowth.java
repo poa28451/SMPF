@@ -76,7 +76,7 @@ public class AlgoFPGrowth {
 	
 	// buffer for storing the current itemset that is mined when performing mining
 	// the idea is to always reuse the same buffer to reduce memory usage.
-	private int[] itemsetBuffer = null;
+	private String[] itemsetBuffer = null;
 	// another buffer for storing fpnodes in a single path of the tree
 	private FPNode[] fpNodeTempBuffer = null;
 	
@@ -124,7 +124,11 @@ public class AlgoFPGrowth {
 		// (1) PREPROCESSING: Initial database scan to determine the frequency of each item
 		// The frequency is stored in a map:
 		//    key: item   value: support
-		final Map<Integer, Integer> mapSupport = scanDatabaseToDetermineFrequencyOfSingleItems(input); 
+		final Map<String, Integer> mapSupport = scanDatabaseToDetermineFrequencyOfSingleItems(input); 
+		
+		for(Map.Entry<String, Integer> entry: mapSupport.entrySet()){
+			System.out.println(entry.getKey() + " " + entry.getValue());
+		}
 
 		// convert the minimum support as percentage to a
 		// relative minimum support
@@ -148,26 +152,26 @@ public class AlgoFPGrowth {
 				continue;
 			}
 			
-			String[] lineSplited = line.split(" ");
+			String[] lineSplited = line.split(",");
 //			Set<Integer> alreadySeen = new HashSet<Integer>();
-			List<Integer> transaction = new ArrayList<Integer>();
+			List<String> transaction = new ArrayList<String>();
 			
 			// for each item in the transaction
 			for(String itemString : lineSplited){  
-				Integer item = Integer.parseInt(itemString);
+				//Integer item = Integer.parseInt(itemString);
 				// only add items that have the minimum support
-				if(mapSupport.get(item) >= minSupportRelative){
-					transaction.add(item);	
+				if(mapSupport.get(itemString) >= minSupportRelative){
+					transaction.add(itemString);	
 				}
 			}
 			// sort item in the transaction by descending order of support
-			Collections.sort(transaction, new Comparator<Integer>(){
-				public int compare(Integer item1, Integer item2){
+			Collections.sort(transaction, new Comparator<String>(){
+				public int compare(String item1, String item2){
 					// compare the frequency
 					int compare = mapSupport.get(item2) - mapSupport.get(item1);
 					// if the same frequency, we check the lexical ordering!
 					if(compare == 0){ 
-						return (item1 - item2);
+						return item1.compareTo(item2);
 					}
 					// otherwise, just use the frequency
 					return compare;
@@ -181,13 +185,14 @@ public class AlgoFPGrowth {
 		
 		// We create the header table for the tree using the calculated support of single items
 		tree.createHeaderList(mapSupport);
+
 		
 		// (5) We start to mine the FP-Tree by calling the recursive method.
 		// Initially, the prefix alpha is empty.
 		// if at least an item is frequent
 		if(tree.headerList.size() > 0) {
 			// initialize the buffer for storing the current itemset
-			itemsetBuffer = new int[BUFFERS_SIZE];
+			itemsetBuffer = new String[BUFFERS_SIZE];
 			// and another buffer
 			fpNodeTempBuffer = new FPNode[BUFFERS_SIZE];
 			// recursively generate frequent itemsets using the fp-tree
@@ -219,7 +224,7 @@ public class AlgoFPGrowth {
 	 * @param mapSupport the frequency of items in the FP-Tree
 	 * @throws IOException  exception if error writing the output file
 	 */
-	private void fpgrowth(FPTree tree, int [] prefix, int prefixLength, int prefixSupport, Map<Integer, Integer> mapSupport) throws IOException {
+	private void fpgrowth(FPTree tree, String [] prefix, int prefixLength, int prefixSupport, Map<String, Integer> mapSupport) throws IOException {
 ////		======= DEBUG ========
 //		System.out.print("###### Prefix: ");
 //		for(int k=0; k< prefixLength; k++) {
@@ -273,7 +278,7 @@ public class AlgoFPGrowth {
 			// For each frequent item in the header table list of the tree in reverse order.
 			for(int i = tree.headerList.size()-1; i>=0; i--){
 				// get the item
-				Integer item = tree.headerList.get(i);
+				String item = tree.headerList.get(i);
 				
 				// get the item support
 				int support = mapSupport.get(item);
@@ -295,11 +300,11 @@ public class AlgoFPGrowth {
 				
 				// Map to count the support of items in the conditional prefix tree
 				// Key: item   Value: support
-				Map<Integer, Integer> mapSupportBeta = new HashMap<Integer, Integer>();
+				Map<String, Integer> mapSupportBeta = new HashMap<String, Integer>();
 				
 				while(path != null){
 					// if the path is not just the root node
-					if(path.parent.itemID != -1){
+					if(path.parent.itemID != "-1"){
 						// create the prefixpath
 						List<FPNode> prefixPath = new ArrayList<FPNode>();
 						// add this node.
@@ -311,7 +316,7 @@ public class AlgoFPGrowth {
 						
 						//Recursively add all the parents of this node.
 						FPNode parent = path.parent;
-						while(parent.itemID != -1){
+						while(parent.itemID != "-1"){
 							prefixPath.add(parent);
 							
 							// FOR EACH PATTERN WE ALSO UPDATE THE ITEM SUPPORT AT THE SAME TIME
@@ -362,7 +367,7 @@ public class AlgoFPGrowth {
 	 * @throws IOException if exception while writting to output file
 	 */
 	private void saveAllCombinationsOfPrefixPath(FPNode[] fpNodeTempBuffer, int position, 
-			int[] prefix, int prefixLength) throws IOException {
+			String[] prefix, int prefixLength) throws IOException {
 
 		int support = 0;
 		// Generate all subsets of the prefixPath except the empty set
@@ -397,10 +402,10 @@ public class AlgoFPGrowth {
 	 * @throws IOException  exception if error while writing the file
 	 * @return a map for storing the support of each item (key: item, value: support)
 	 */
-	private  Map<Integer, Integer> scanDatabaseToDetermineFrequencyOfSingleItems(String input)
+	private  Map<String, Integer> scanDatabaseToDetermineFrequencyOfSingleItems(String input)
 			throws FileNotFoundException, IOException {
 		// a map for storing the support of each item (key: item, value: support)
-		 Map<Integer, Integer> mapSupport = new HashMap<Integer, Integer>();
+		 Map<String, Integer> mapSupport = new HashMap<String, Integer>();
 		//Create object for reading the input file
 		BufferedReader reader = new BufferedReader(new FileReader(input));
 		String line;
@@ -413,17 +418,17 @@ public class AlgoFPGrowth {
 			}
 			
 			// split the line into items
-			String[] lineSplited = line.split(" ");
+			String[] lineSplited = line.split(",");
 			// for each item
 			for(String itemString : lineSplited){  
 				// increase the support count of the item
-				Integer item = Integer.parseInt(itemString);
+				//Integer item = Integer.parseInt(itemString);
 				// increase the support count of the item
-				Integer count = mapSupport.get(item);
+				Integer count = mapSupport.get(itemString);
 				if(count == null){
-					mapSupport.put(item, 1);
+					mapSupport.put(itemString, 1);
 				}else{
-					mapSupport.put(item, ++count);
+					mapSupport.put(itemString, ++count);
 				}
 			}
 			// increase the transaction count
@@ -440,7 +445,7 @@ public class AlgoFPGrowth {
 	 * Write a frequent itemset that is found to the output file or
 	 * keep into memory if the user prefer that the result be saved into memory.
 	 */
-	private void saveItemset(int [] itemset, int itemsetLength, int support) throws IOException {
+	private void saveItemset(String [] itemset, int itemsetLength, int support) throws IOException {
 		
 		// increase the number of itemsets found for statistics purpose
 		itemsetCount++;
@@ -471,7 +476,7 @@ public class AlgoFPGrowth {
 		else{
 			// create an object Itemset and add it to the set of patterns 
 			// found.
-			int[] itemsetArray = new int[itemsetLength];
+			String[] itemsetArray = new String[itemsetLength];
 			System.arraycopy(itemset, 0, itemsetArray, 0, itemsetLength);
 			
 			// sort the itemset so that it is sorted according to lexical ordering before we show it to the user

@@ -86,6 +86,6 @@ public abstract class AbstractItemset {
 	 * @param item  the item
 	 * @return true if the item is contained in this itemset
 	 */
-	public abstract boolean contains(Integer item);
+	public abstract boolean contains(String item);
 
 }

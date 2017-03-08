@@ -38,14 +38,14 @@ import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
  */
 public class FPTree {
 	// List of items in the header table
-	List<Integer> headerList = null;
+	List<String> headerList = null;
 	
 	// List of pairs (item, frequency) of the header table
-	Map<Integer, FPNode> mapItemNodes = new HashMap<Integer, FPNode>();
+	Map<String, FPNode> mapItemNodes = new HashMap<String, FPNode>();
 	
 	// Map that indicates the last node for each item using the node links
 	// key: item   value: an fp tree node
-	Map<Integer, FPNode> mapItemLastNode = new HashMap<Integer, FPNode>();
+	Map<String, FPNode> mapItemLastNode = new HashMap<String, FPNode>();
 	
 	// root of the tree
 	FPNode root = new FPNode(); // null node
@@ -62,10 +62,10 @@ public class FPTree {
 	 * of the FP-Tree).
 	 * @param transaction
 	 */
-	public void addTransaction(List<Integer> transaction) {
+	public void addTransaction(List<String> transaction) {
 		FPNode currentNode = root;
 		// For each item in the transaction
-		for(Integer item : transaction){
+		for(String item : transaction){
 			// look if there is a node already in the FP-Tree
 			FPNode child = currentNode.getChildWithID(item);
 			if(child == null){ 
@@ -95,7 +95,7 @@ public class FPTree {
 	 * @param item  the item of the new node
 	 * @param newNode the new node thas has been inserted.
 	 */
-	private void fixNodeLinks(Integer item, FPNode newNode) {
+	private void fixNodeLinks(String item, FPNode newNode) {
 		// get the latest node in the tree with this item
 		FPNode lastNode = mapItemLastNode.get(item);
 		if(lastNode != null) {
@@ -117,7 +117,7 @@ public class FPTree {
 	 * @param mapSupportBeta  The frequencies of items in the prefixpaths
 	 * @param relativeMinsupp
 	 */
-	void addPrefixPath(List<FPNode> prefixPath, Map<Integer, Integer> mapSupportBeta, int relativeMinsupp) {
+	void addPrefixPath(List<FPNode> prefixPath, Map<String, Integer> mapSupportBeta, int relativeMinsupp) {
 		// the first element of the prefix path contains the path support
 		int pathCount = prefixPath.get(0).counter;  
 		
@@ -156,19 +156,19 @@ public class FPTree {
 	 *  in descending order of support.
 	 * @param mapSupport the frequencies of each item (key: item  value: support)
 	 */
-	void createHeaderList(final Map<Integer, Integer> mapSupport) {
+	void createHeaderList(final Map<String, Integer> mapSupport) {
 		// create an array to store the header list with
 		// all the items stored in the map received as parameter
-		headerList =  new ArrayList<Integer>(mapItemNodes.keySet());
+		headerList =  new ArrayList<String>(mapItemNodes.keySet());
 		
 		// sort the header table by decreasing order of support
-		Collections.sort(headerList, new Comparator<Integer>(){
-			public int compare(Integer id1, Integer id2){
+		Collections.sort(headerList, new Comparator<String>(){
+			public int compare(String id1, String id2){
 				// compare the support
 				int compare = mapSupport.get(id2) - mapSupport.get(id1);
 				// if the same frequency, we check the lexical ordering!
 				// otherwise we use the support
-				return (compare == 0) ? (id1 - id2) : compare;
+				return (compare == 0) ? (id1.compareTo(id2)) : compare;
 			}
 		});
 	}

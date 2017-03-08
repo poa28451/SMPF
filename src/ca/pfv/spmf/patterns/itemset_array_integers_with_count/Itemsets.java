@@ -51,7 +51,7 @@ public class Itemsets{
 	 */
 	public void printItemsets(int nbObject) {
 		System.out.println(" ------- " + name + " -------");
-		int patternCount = 0;
+		int patternCount = 1;
 		int levelCount = 0;
 		// for each level (a level is a set of itemsets having the same number of items)
 		for (List<Itemset> level : levels) {

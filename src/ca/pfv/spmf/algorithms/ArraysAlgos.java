@@ -107,18 +107,18 @@ public class ArraysAlgos {
 	 * @param b the second array
 	 * @return the resulting sorted array
 	 */
-	public static int[] intersectTwoSortedArrays(int[] array1, int[] array2){
+	public static String[] intersectTwoSortedArrays(String[] array1, String[] array2){
 		// create a new array having the smallest size between the two arrays
 	    final int newArraySize = (array1.length < array2.length) ? array1.length : array2.length;
-	    int[] newArray = new int[newArraySize];
+	    String[] newArray = new String[newArraySize];
 
 	    int pos1 = 0;
 	    int pos2 = 0;
 	    int posNewArray = 0;
 	    while(pos1 < array1.length && pos2 < array2.length) {
-	    	if(array1[pos1] < array2[pos2]) {
+	    	if(array1[pos1].compareTo(array2[pos2]) < 0) {
 	    		pos1++;
-	    	}else if(array2[pos2] < array1[pos1]) {
+	    	}else if(array2[pos2].compareTo(array1[pos1]) < 0) {
 	    		pos2++;
 	    	}else { // if they are the same
 	    		newArray[posNewArray] = array1[pos1];
@@ -356,20 +356,20 @@ loop1:		for(int i =0; i < itemset2.length; i++){
 	}
 
 	/** A Comparator for comparing two itemsets having the same size using the lexical order. */
-	public static Comparator<int[]> comparatorItemsetSameSize = new Comparator<int[]>() {
+	public static Comparator<String[]> comparatorItemsetSameSize = new Comparator<String[]>() {
 		@Override
 		/**
 		 * Compare two itemsets and return -1,0 and 1 if the second itemset 
 		 * is larger, equal or smaller than the first itemset according to the lexical order.
 		 */
-		public int compare(int[] itemset1, int[] itemset2) {
+		public int compare(String[] itemset1, String[] itemset2) {
 			// for each item in the first itemset
 			for(int i=0; i < itemset1.length; i++) {
 				// if the current item is smaller in the first itemset
-				if(itemset1[i] < itemset2[i]) {
+				if(itemset1[i].compareTo(itemset2[i]) < 0) {
 					return -1; // than the first itemset is smaller
 				// if the current item is larger in the first itemset
-				}else if(itemset2[i] < itemset1[i]) {
+				}else if(itemset2[i].compareTo(itemset1[i]) < 0) {
 					return 1; // than the first itemset is larger
 				}
 				// otherwise they are equal so the next item in both itemsets will be compared next.
