@@ -130,6 +130,9 @@ public class AlgoFPGrowth {
 			System.out.println(entry.getKey() + " " + entry.getValue());
 		}
 
+		String temp = "1";
+		System.out.println(temp.compareTo("2"));
+		
 		// convert the minimum support as percentage to a
 		// relative minimum support
 		this.minSupportRelative = (int) Math.ceil(minsupp * transactionCount);

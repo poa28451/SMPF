@@ -34,7 +34,7 @@ public class MainTestAllAssociationRules_FPGrowth_saveToFile {
 		int databaseSize = fpgrowth.getDatabaseSize();
 		
 		// STEP 2: Generating all rules from the set of frequent itemsets (based on Agrawal & Srikant, 94)
-		double  minconf = 0.60;
+		double  minconf = 0.5;
 		AlgoAgrawalFaster94 algoAgrawal = new AlgoAgrawalFaster94();
 		algoAgrawal.runAlgorithm(patterns, output, databaseSize, minconf);
 		algoAgrawal.printStats();

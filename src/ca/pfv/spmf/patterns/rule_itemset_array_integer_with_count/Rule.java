@@ -28,9 +28,9 @@ import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemset;
  */
 public class Rule {
 	/** antecedent */
-	private int[] itemset1; 
+	private String[] itemset1; 
 	/** consequent */
-	private int[] itemset2;
+	private String[] itemset2;
 	/** coverage (support of the antecedent)*/
 	private int coverage;
 	/** relative support */
@@ -41,9 +41,9 @@ public class Rule {
 	/**
 	 * Constructor
 	 * 
-	 * @param itemset1
+	 * @param itemset12
 	 *            the antecedent of the rule (an itemset)
-	 * @param itemset2
+	 * @param itemset22
 	 *            the consequent of the rule (an itemset)
 	 * @param coverage the support of the antecedent as a number of transactions
 	 * @param transactionCount
@@ -51,10 +51,10 @@ public class Rule {
 	 * @param confidence
 	 *            the confidence of the rule
 	 */
-	public Rule(int[] itemset1, int[] itemset2, int coverage,
+	public Rule(String[] itemset12, String[] itemset22, int coverage,
 			int transactionCount, double confidence) {
-		this.itemset1 = itemset1;
-		this.itemset2 = itemset2;
+		this.itemset1 = itemset12;
+		this.itemset2 = itemset22;
 		this.coverage = coverage;
 		this.transactionCount = transactionCount;
 		this.confidence = confidence;
@@ -135,7 +135,7 @@ public class Rule {
 	 * 
 	 * @return an itemset.
 	 */
-	public int[] getItemset1() {
+	public String[] getItemset1() {
 		return itemset1;
 	}
 
@@ -144,7 +144,7 @@ public class Rule {
 	 * 
 	 * @return an itemset.
 	 */
-	public int[] getItemset2() {
+	public String[] getItemset2() {
 		return itemset2;
 	}
 }

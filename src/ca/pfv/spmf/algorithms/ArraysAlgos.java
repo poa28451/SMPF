@@ -33,14 +33,14 @@ public class ArraysAlgos {
 	 * @param itemToRemove the given item
 	 * @return the copy
 	 */
-	public static int[] cloneItemSetMinusOneItem(int[] itemset, Integer itemToRemove) {
+	public static String[] cloneItemSetMinusOneItem(String[] itemset, String itemToRemove) {
 		// create the new itemset
-		int[] newItemset = new int[itemset.length -1];
+		String[] newItemset = new String[itemset.length -1];
 		int i=0;
 		// for each item in this itemset
 		for(int j =0; j < itemset.length; j++){
 			// copy the item except if it is the item that should be excluded
-			if(itemset[j] != itemToRemove){
+			if(!itemset[j].equals(itemToRemove)){
 				newItemset[i++] = itemset[j];
 			}
 		}
@@ -52,9 +52,9 @@ public class ArraysAlgos {
 	 * @param itemsetToNotKeep the set of items to be excluded
 	 * @return the copy
 	 */
-	public static int[] cloneItemSetMinusAnItemset(int[] itemset, int[] itemsetToNotKeep) {
+	public static String[] cloneItemSetMinusAnItemset(String[] itemset, String[] itemsetToNotKeep) {
 		// create a new itemset
-		int[] newItemset = new int[itemset.length - itemsetToNotKeep.length];
+		String[] newItemset = new String[itemset.length - itemsetToNotKeep.length];
 		int i=0;
 		// for each item of this itemset
 		for(int j = 0; j < itemset.length; j++){

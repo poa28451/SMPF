@@ -172,14 +172,14 @@ public class AlgoAgrawalFaster94{
 			for (Itemset lk : patterns.getLevels().get(k)) {
 				
 				// create a variable H1 for recursion
-				List<int[]> H1_for_recursion = new ArrayList<int[]>();
+				List<String[]> H1_for_recursion = new ArrayList<String[]>();
 				
 				// For each itemset "itemsetSize1" of size 1 that is member of lk
-				for(int item : lk.getItems()) {
-					int itemsetHm_P_1[] = new int[] {item};
+				for(String item : lk.getItems()) {
+					String itemsetHm_P_1[] = new String[] {item};
 	
 					// make a copy of  lk without items from  hm_P_1
-					int[] itemset_Lk_minus_hm_P_1 = ArraysAlgos.cloneItemSetMinusOneItem(lk.getItems(), item);
+					String[] itemset_Lk_minus_hm_P_1 = ArraysAlgos.cloneItemSetMinusOneItem(lk.getItems(), item);
 
 					// Now we will calculate the support and confidence
 					// of the rule: itemset_Lk_minus_hm_P_1 ==>  hm_P_1
@@ -249,22 +249,22 @@ public class AlgoAgrawalFaster94{
 	 * @param Hm a set of itemsets that can be used with lk to generate rules
 	 * @throws IOException exception if error while writing output file
 	 */
-	private void apGenrules(int k, int m, Itemset lk, List<int[]> Hm)
+	private void apGenrules(int k, int m, Itemset lk, List<String[]> Hm)
 			throws IOException {
 		
 		// if the itemset "lk" that is used to generate rules is larger than the size of itemsets in "Hm"
 		if (k > m + 1) {
 			// Create a list that we will be used to store itemsets for the recursive call
-			List<int[]> Hm_plus_1_for_recursion = new ArrayList<int[]>();
+			List<String[]> Hm_plus_1_for_recursion = new ArrayList<String[]>();
 			
 			// generate candidates using Hm
-			List<int[]> Hm_plus_1 = generateCandidateSizeK(Hm);
+			List<String[]> Hm_plus_1 = generateCandidateSizeK(Hm);
 			
 			// for each such candidates
-			for (int[] hm_P_1 : Hm_plus_1) {
+			for (String[] hm_P_1 : Hm_plus_1) {
 				
 				// We subtract the candidate from the itemset "lk"
-				int[] itemset_Lk_minus_hm_P_1 =  ArraysAlgos.cloneItemSetMinusAnItemset(lk.getItems(), hm_P_1);
+				String[] itemset_Lk_minus_hm_P_1 =  ArraysAlgos.cloneItemSetMinusAnItemset(lk.getItems(), hm_P_1);
 
 				// We will now calculate the support of the rule  Lk/(hm_P_1) ==> hm_P_1
 				// we need it to calculate the confidence
@@ -323,7 +323,7 @@ public class AlgoAgrawalFaster94{
 	 * @param itemset the itemset.
 	 * @return the support of the itemset
 	 */
-	private int calculateSupport(int[] itemset) {
+	private int calculateSupport(String[] itemset) {
 		// We first get the list of patterns having the same size as "itemset"
 		List<Itemset> patternsSameSize = patterns.getLevels().get(itemset.length);
 //		
@@ -334,7 +334,7 @@ public class AlgoAgrawalFaster94{
         while( first <= last )
         {
         	int middle = ( first + last ) >>1 ; // >>1 means to divide by 2
-        	int[] itemsetMiddle = patternsSameSize.get(middle).getItems();
+        	String[] itemsetMiddle = patternsSameSize.get(middle).getItems();
 
         	int comparison = ArraysAlgos.comparatorItemsetSameSize.compare(itemset, itemsetMiddle);
             if(comparison  > 0 ){
@@ -366,15 +366,15 @@ public class AlgoAgrawalFaster94{
 	 * @param levelK_1  a set of itemsets of size k-1
 	 * @return a set of candidates
 	 */
-	protected List<int[]> generateCandidateSizeK(List<int[]> levelK_1) {
+	protected List<String[]> generateCandidateSizeK(List<String[]> levelK_1) {
 		// create a variable to store candidates
-		List<int[]> candidates = new ArrayList<int[]>();
+		List<String[]> candidates = new ArrayList<String[]>();
 
 		// For each itemset I1 and I2 of level k-1
 		loop1: for (int i = 0; i < levelK_1.size(); i++) {
-			int[] itemset1 = levelK_1.get(i);
+			String[] itemset1 = levelK_1.get(i);
 			loop2: for (int j = i + 1; j < levelK_1.size(); j++) {
-				int[] itemset2 = levelK_1.get(j);
+				String[] itemset2 = levelK_1.get(j);
 
 				// we compare items of itemset1 and itemset2.
 				// If they have all the same k-1 items and the last item of
@@ -387,32 +387,32 @@ public class AlgoAgrawalFaster94{
 						// the one from itemset1 should be smaller (lexical
 						// order)
 						// and different from the one of itemset2
-						if (itemset1[k] >= itemset2[k]) {
+						if (itemset1[k].compareTo(itemset2[k]) >= 0) {
 							continue loop1;
 						}
 					}
 					// if they are not the last items, and
-					else if (itemset1[k] < itemset2[k]) {
+					else if (itemset1[k].compareTo(itemset2[k]) < 0) {
 						continue loop2; // we continue searching
-					} else if (itemset1[k] > itemset2[k]) {
+					} else if (itemset1[k].compareTo(itemset2[k]) > 0) {
 						continue loop1; // we stop searching: because of lexical
 										// order
 					}
 				}
 
 				// Create a new candidate by combining itemset1 and itemset2
-				int lastItem1 =  itemset1[itemset1.length -1];
-				int lastItem2 =  itemset2[itemset2.length -1];
-				int newItemset[];
-				if(lastItem1 < lastItem2) {
+				String lastItem1 =  itemset1[itemset1.length -1];
+				String lastItem2 =  itemset2[itemset2.length -1];
+				String newItemset[];
+				if(lastItem1.compareTo(lastItem2) < 0) {
 					// Create a new candidate by combining itemset1 and itemset2
-					newItemset = new int[itemset1.length+1];
+					newItemset = new String[itemset1.length+1];
 					System.arraycopy(itemset1, 0, newItemset, 0, itemset1.length);
 					newItemset[itemset1.length] = lastItem2;
 					candidates.add(newItemset);
 				}else {
 					// Create a new candidate by combining itemset1 and itemset2
-					newItemset  = new int[itemset1.length+1];
+					newItemset  = new String[itemset1.length+1];
 					System.arraycopy(itemset2, 0, newItemset, 0, itemset2.length);
 					newItemset[itemset2.length] = lastItem1;
 					candidates.add(newItemset);
@@ -448,7 +448,7 @@ public class AlgoAgrawalFaster94{
 	 * @param lift lift of the rule
 	 * @throws IOException exception if error writing the output file
 	 */
-	protected void saveRule(int[] itemset1, int supportItemset1, int[] itemset2, int supportItemset2,
+	protected void saveRule(String[] itemset1, int supportItemset1, String[] itemset2, int supportItemset2,
 			int absoluteSupport, double conf, double lift) throws IOException {
 		ruleCount++;
 		

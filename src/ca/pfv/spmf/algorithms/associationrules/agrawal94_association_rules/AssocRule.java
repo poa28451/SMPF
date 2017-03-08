@@ -46,8 +46,8 @@ public class AssocRule extends Rule{
 	 * @param confidence
 	 *            the confidence of the rule
 	 * @param lift   the lift of the rule
-	 */
-	public AssocRule(int[] itemset1, int[] itemset2, int supportAntecedent,
+	 */	
+	public AssocRule(String[] itemset1, String[] itemset2, int supportAntecedent,
 			int transactionCount, double confidence, double lift) {
 		super(itemset1, itemset2, supportAntecedent, transactionCount, confidence);
 		this.lift = lift;
