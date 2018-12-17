@@ -83,7 +83,7 @@ public class AlgoFPGrowth {
 	// This buffer is used to store an itemset that will be written to file
 	// so that the algorithm can sort the itemset before it is output to file
 	// (when the user choose to output result to file).
-	private int[] itemsetOutputBuffer = null;
+	private String[] itemsetOutputBuffer = null;
 
 	/**
 	 * Constructor
@@ -118,7 +118,7 @@ public class AlgoFPGrowth {
 	    }else{ // if the user want to save the result to a file
 			patterns = null;
 			writer = new BufferedWriter(new FileWriter(output)); 
-			itemsetOutputBuffer = new int[BUFFERS_SIZE];
+			itemsetOutputBuffer = new String[BUFFERS_SIZE];
 		}
 		
 		// (1) PREPROCESSING: Initial database scan to determine the frequency of each item
@@ -126,12 +126,13 @@ public class AlgoFPGrowth {
 		//    key: item   value: support
 		final Map<String, Integer> mapSupport = scanDatabaseToDetermineFrequencyOfSingleItems(input); 
 		
-		for(Map.Entry<String, Integer> entry: mapSupport.entrySet()){
+		/**
+		 * Print support counts of every items
+		 */
+		System.out.println("13:Support Count: \n" + mapSupport);
+		/*for(Map.Entry<String, Integer> entry: mapSupport.entrySet()){
 			System.out.println(entry.getKey() + " " + entry.getValue());
-		}
-
-		String temp = "1";
-		System.out.println(temp.compareTo("2"));
+		}*/
 		
 		// convert the minimum support as percentage to a
 		// relative minimum support
@@ -167,6 +168,12 @@ public class AlgoFPGrowth {
 					transaction.add(itemString);	
 				}
 			}
+			
+			/**
+			 * By this point, this one transaction has been converted into Unordered Frequent Items
+			 * The next thing to do is to sort it, make it into Ordered Frequent Items
+			 */
+			
 			// sort item in the transaction by descending order of support
 			Collections.sort(transaction, new Comparator<String>(){
 				public int compare(String item1, String item2){
@@ -181,14 +188,33 @@ public class AlgoFPGrowth {
 				}
 			});
 			// add the sorted transaction to the fptree.
+			/**
+			 * Add this Ordered Frequent Items transaction into the FP-tree
+			 */
 			tree.addTransaction(transaction);
 		}
 		// close the input file
-		reader.close();
+		reader.close();		
 		
 		// We create the header table for the tree using the calculated support of single items
+		/**
+		 * i.e. this is the list of every items that Support > minsup, sorted in order from highest sup to lowest sup. 
+		 */
 		tree.createHeaderList(mapSupport);
+		System.out.println("205:Header List: \n " + tree.headerList);
+		
 
+		/**
+		 * At this point, FP-tree has been fully constructed. What's left is to find Conditional Pattern Bases
+		 * 	and further find Conditional FP-trees which are used to create Frequent patterns
+		 */
+		
+		/**
+		 * Prune the FP-tree
+		 */
+		if(tree.headerList.size() > 0) {
+			fptreePruning(tree, mapSupport);
+		}
 		
 		// (5) We start to mine the FP-Tree by calling the recursive method.
 		// Initially, the prefix alpha is empty.
@@ -218,7 +244,91 @@ public class AlgoFPGrowth {
 		return patterns;
 	}
 
+	private void fptreePruning(FPTree tree, Map<String, Integer> mapSupport){
+		traverseTree(tree.root, tree, mapSupport);
+			
+	}
+	
+	private void traverseTree(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){		
+		//Traverse recursively to the left-most child node first.
+		//This is Pre-order traversal (read the data in the parent first, then traverse from the left-most child to the right-most child)
+		
+		//Do whatever you want
+		if(curNode.itemID != "-1"){
+			calculateMaxConf(curNode, tree, mapSupport);
+		}
+		
+		for(int i=0; i<curNode.childs.size(); i++){
+			traverseTree(curNode.childs.get(i), tree, mapSupport);
+		}
+	}
+	
+	private void calculateMaxConf(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){
+		if(curNode.parent.itemID == "-1"){
+			//Cannot find a max confidence of a single item
+			return;
+		}
+		
+		int subtreeSupport = calculateSubtreeSupport(curNode, tree);
+		int subtreeMinSup;
+		
+		//Min Conf = Sup(parents+currentNode)/Sup(x), where x has 1 item to give max sup
+		//Max Conf = Sup(parents+currentNod)/Sup(x), where x has k-1 items to give min sup, k = number of items in (parents+currentNod)
+		//We want to find max conf
+		//The support of the itemset is equal to the lowest support counter of its member  in the FP-tree
+	}
+	
+	private int calculateSubtreeSupport(FPNode curNode, FPTree tree){
+		int subtreeSupport = 0;
+		List<FPNode> subtree = new ArrayList<>();
+		FPNode temp = curNode;
+		
+		// Store all the nodes in this subtree, make it into current subtree
+		while(temp.itemID != "-1"){
+			subtree.add(temp);
+			temp = temp.parent;
+		}
 
+		// We are trying to count the support by comparing this subtree with a subtree from FP-tree
+		//	by back-tracking from the lowest node upto the root
+		
+		temp = tree.mapItemNodes.get(curNode.itemID);
+		//System.out.println(temp.itemID + ": ");
+		int matchedParents = 0;
+		while(temp != null){// Do a loop until we have already considered every nodes with this itemID
+			int i = 1;
+			int nodeSupport = temp.counter; //Remember this FP-tree node's support
+			FPNode parent = temp.parent;
+			//System.out.print(parent.itemID + " ");
+			
+			while(parent.itemID != "-1" && i < subtree.size()){ //If it isn't a root and the whole of current subtree hasn't been found yet
+				//System.out.println(parent.itemID + " + " + subtree.get(i).itemID + "(" + (parent.itemID == subtree.get(i).itemID) + ")");
+				
+				if(parent.itemID.equals(subtree.get(i).itemID)){ // If the node from FP-tree has the same item as the current node from this subtree
+					// Count the matching node and move the pointer (i) to the next node in current subtree
+					matchedParents++;
+					i++;
+				}
+				
+				if(matchedParents == subtree.size()-1){ // If the current subtree is completely matched with the branch from FP-tree
+					// Aggregate this subtree's support
+					subtreeSupport += nodeSupport;
+					break;
+				}
+				parent = parent.parent; // Move the pointer to the next node in FP-tree's subtree
+			}
+			matchedParents = 0;
+			temp = temp.nodeLink; // Move onto the next node in FP-tree with the same item
+			//System.out.print(" " + (temp == null) + " / ");
+		}
+		//System.out.println();
+			
+		for(int i=0; i<subtree.size(); i++){
+			System.out.print(subtree.get(i).itemID + " > ");
+		}
+		System.out.println("sup=" + subtreeSupport);
+		return subtreeSupport;
+	}
 	
 	/**
 	 * Mine an FP-Tree having more than one path.
@@ -228,13 +338,13 @@ public class AlgoFPGrowth {
 	 * @throws IOException  exception if error writing the output file
 	 */
 	private void fpgrowth(FPTree tree, String [] prefix, int prefixLength, int prefixSupport, Map<String, Integer> mapSupport) throws IOException {
-////		======= DEBUG ========
+//		======= DEBUG ========
 //		System.out.print("###### Prefix: ");
 //		for(int k=0; k< prefixLength; k++) {
 //			System.out.print(prefix[k] + "  ");
 //		}
 //		System.out.println("\n");
-////				========== END DEBUG =======
+//				========== END DEBUG =======
 //		System.out.println(tree);
 		
 		// We will check if the FPtree contains a single path
@@ -290,6 +400,7 @@ public class AlgoFPGrowth {
 				prefix[prefixLength] = item;
 				
 				// calculate the support of the new prefix beta
+				// The support of the suffix will always be the lowest possible support of an item in that suffix
 				int betaSupport = (prefixSupport < support) ? prefixSupport: support;
 				
 				// save beta to the output file
@@ -511,4 +622,43 @@ public class AlgoFPGrowth {
 	public int getDatabaseSize() {
 		return transactionCount;
 	}
+	
+	/*private void traverseTree(FPNode curNode, List<FPNode> parents, Map<String, Integer> mapSupport){		
+		//Traverse recursively to the left-most child node first.
+		//This is Pre-order traversal (read the data in the parent first, then traverse from the left-most child to the right-most child)
+		
+		//Do whatever you want
+		if(curNode.itemID != "-1"){
+			calculateMaxConf(curNode, parents, mapSupport);
+			parents.add(curNode);
+		}
+		
+		for(int i=0; i<curNode.childs.size(); i++){
+			traverseTree(curNode.childs.get(i), parents, mapSupport);
+		}
+	}
+	
+	private void calculateMaxConf(FPNode curNode, List<FPNode> parents, Map<String, Integer> mapSupport){
+		if(parents.size() == 0){
+			//Cannot find a max confidence of a single item
+			return;
+		}
+	
+		//Min Conf = Sup(parents+currentNode)/Sup(x), where x has 1 item to give max sup
+		//Max Conf = Sup(parents+currentNod)/Sup(x), where x has k-1 items to give min sup, k = number of items in (parents+currentNod)
+		//We want to find max conf
+		//The support of the itemset is equal to the lowest support counter of its member  in the FP-tree
+		
+		//int support = mapSupport.get(curNode.itemID);
+		int support = curNode.counter;
+		
+		for(FPNode parent: parents){
+			//If there's a support that's lower than the current node's support, use that support instead
+			
+			//support = (support > mapSupport.get(parent.itemID)) ? mapSupport.get(parent.itemID) : support;
+			support = (support > parent.counter) ? parent.counter : support;
+		}
+		System.out.println(curNode.itemID + " minsup=" + support);
+		
+	}*/
 }

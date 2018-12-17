@@ -43,6 +43,11 @@ public class FPNode {
 	FPNode nodeLink = null; // link to next node with the same item id (for the header table).
 	
 	/**
+	 * Added to store max confidence value
+	 */
+	public int maxConf = 0;
+	
+	/**
 	 * constructor
 	 */
 	FPNode(){

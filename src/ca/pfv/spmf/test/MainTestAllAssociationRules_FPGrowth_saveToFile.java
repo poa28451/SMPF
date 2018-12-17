@@ -19,8 +19,8 @@ public class MainTestAllAssociationRules_FPGrowth_saveToFile {
 		//String input = fileToPath("C:\\Users\\Lightning\\Desktop\\contextIGB(comma).txt");
 		//String input = "C:\\Users\\Lightning\\Desktop\\contextIGB(comma)test.txt";
 		//String input = "C:\\Users\\Lightning\\Desktop\\contextIGB(comma).txt";
-		String input = "C:\\Users\\Lightning\\Desktop\\transaction.txt";
-		String output = ".//output.txt";
+		String input = "C:\\Users\\Lightning\\Desktop\\transaction\\transaction.txt";
+		String output = "C:\\Users\\Lightning\\Desktop\\output.txt";
 //		String output = "C:\\patterns\\association_rules.txt";
 
 
