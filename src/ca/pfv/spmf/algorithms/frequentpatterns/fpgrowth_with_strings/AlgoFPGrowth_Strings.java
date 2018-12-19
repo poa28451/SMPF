@@ -117,7 +117,7 @@ public class AlgoFPGrowth_Strings {
 			}
 			
 			// split the transaction into items
-			String[] lineSplited = line.split(" ");
+			String[] lineSplited = line.split(",");
 			// create an array list to store the items
 			List<String> transaction = new ArrayList<String>();
 			// for each item in the transaction
@@ -195,7 +195,7 @@ public class AlgoFPGrowth_Strings {
 			}
 			
 			// split the transaction into items
-			String[] lineSplited = line.split(" ");
+			String[] lineSplited = line.split(",");
 			 // for each item in the transaction
 			for(String itemString : lineSplited){ 
 				// increase the support count of the item

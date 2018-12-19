@@ -129,7 +129,7 @@ public class AlgoFPGrowth {
 		/**
 		 * Print support counts of every items
 		 */
-		System.out.println("13:Support Count: \n" + mapSupport);
+		System.out.println("132:Support Count: \n" + mapSupport);
 		/*for(Map.Entry<String, Integer> entry: mapSupport.entrySet()){
 			System.out.println(entry.getKey() + " " + entry.getValue());
 		}*/
@@ -201,7 +201,7 @@ public class AlgoFPGrowth {
 		 * i.e. this is the list of every items that Support > minsup, sorted in order from highest sup to lowest sup. 
 		 */
 		tree.createHeaderList(mapSupport);
-		System.out.println("205:Header List: \n " + tree.headerList);
+		System.out.println("204:Ordered Items: \n " + tree.headerList + "\n");
 		
 
 		/**
@@ -246,7 +246,39 @@ public class AlgoFPGrowth {
 
 	private void fptreePruning(FPTree tree, Map<String, Integer> mapSupport){
 		traverseTree(tree.root, tree, mapSupport);
-			
+		
+	}
+	
+	private void calculateMaxConf(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){
+		if(curNode.parent.itemID == "-1"){
+			//Cannot find a max confidence of a single item
+			return;
+		}
+
+		// Store all the nodes in this path up to the root, make it into current subtree
+		List<FPNode> subtree = new ArrayList<>();
+		FPNode temp = curNode;		
+		while (temp.itemID != "-1") {
+			subtree.add(temp);
+			temp = temp.parent;
+		}
+		
+		//Min Conf = Sup(parents+currentNode)/Sup(x), where x has 1 item to give max sup
+		//Max Conf = Sup(parents+currentNod)/Sup(x), where x has k-1 items to give min sup, k = number of items in (parents+currentNod)
+		//We want to find max conf
+		
+		int subtreeSupport = calculateSubtreeSupport(subtree, tree, mapSupport, true);
+		int subtreeMinSup = transactionCount;
+		
+		List<List<FPNode>> subtreeCombination = findK_1Permutation(subtree);
+		for(List<FPNode> combi : subtreeCombination){
+			int combiSup = calculateSubtreeSupport(combi, tree, mapSupport, false);
+			subtreeMinSup = (subtreeMinSup < combiSup) ? subtreeMinSup : combiSup;
+			if(subtreeMinSup == 1) break;
+		}
+		//System.out.println(" // minsup = " + subtreeMinSup);
+		System.out.println("Max conf = " + subtreeSupport + "/" + subtreeMinSup);
+		
 	}
 	
 	private void traverseTree(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){		
@@ -263,36 +295,45 @@ public class AlgoFPGrowth {
 		}
 	}
 	
-	private void calculateMaxConf(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){
-		if(curNode.parent.itemID == "-1"){
-			//Cannot find a max confidence of a single item
-			return;
+	private List<List<FPNode>> findK_1Permutation(List<FPNode> subtree){
+		List<List<FPNode>> subtreeCombination = new ArrayList<List<FPNode>>();		
+		List<FPNode> combi;
+		
+		for(int i=0; i<subtree.size(); i++){
+			combi = new ArrayList<>();
+			for(FPNode item : subtree){
+				if(item != subtree.get(i)){
+					combi.add(item);
+				}
+			}
+			subtreeCombination.add(combi);
 		}
+		//System.out.println(subtreeCombination.toString());
 		
-		int subtreeSupport = calculateSubtreeSupport(curNode, tree);
-		int subtreeMinSup;
-		
-		//Min Conf = Sup(parents+currentNode)/Sup(x), where x has 1 item to give max sup
-		//Max Conf = Sup(parents+currentNod)/Sup(x), where x has k-1 items to give min sup, k = number of items in (parents+currentNod)
-		//We want to find max conf
-		//The support of the itemset is equal to the lowest support counter of its member  in the FP-tree
+		return subtreeCombination;
 	}
 	
-	private int calculateSubtreeSupport(FPNode curNode, FPTree tree){
+	private int calculateSubtreeSupport(List<FPNode> subtree, FPTree tree, Map<String, Integer> mapSupport, boolean isPrint){
 		int subtreeSupport = 0;
-		List<FPNode> subtree = new ArrayList<>();
+		/*List<FPNode> subtree = new ArrayList<>();
 		FPNode temp = curNode;
 		
 		// Store all the nodes in this subtree, make it into current subtree
 		while(temp.itemID != "-1"){
 			subtree.add(temp);
 			temp = temp.parent;
-		}
+		}*/
 
 		// We are trying to count the support by comparing this subtree with a subtree from FP-tree
 		//	by back-tracking from the lowest node upto the root
 		
-		temp = tree.mapItemNodes.get(curNode.itemID);
+		if(subtree.size() == 1){
+			subtreeSupport = mapSupport.get(subtree.get(0).itemID);
+			//System.out.println(subtree.get(0).itemID + " sup=" + subtreeSupport);
+			return subtreeSupport;
+		}
+		
+		FPNode temp = tree.mapItemNodes.get(subtree.get(0).itemID);
 		//System.out.println(temp.itemID + ": ");
 		int matchedParents = 0;
 		while(temp != null){// Do a loop until we have already considered every nodes with this itemID
@@ -322,11 +363,13 @@ public class AlgoFPGrowth {
 			//System.out.print(" " + (temp == null) + " / ");
 		}
 		//System.out.println();
-			
-		for(int i=0; i<subtree.size(); i++){
-			System.out.print(subtree.get(i).itemID + " > ");
+		
+		if(isPrint){
+			for(int i=0; i<subtree.size(); i++){
+				System.out.print(subtree.get(i).itemID + " > ");
+			}
+			System.out.print("sup=" + subtreeSupport);
 		}
-		System.out.println("sup=" + subtreeSupport);
 		return subtreeSupport;
 	}
 	

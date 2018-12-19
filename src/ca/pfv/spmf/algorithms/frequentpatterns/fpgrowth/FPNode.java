@@ -53,6 +53,10 @@ public class FPNode {
 	FPNode(){
 		
 	}
+	
+	FPNode(String item){
+		itemID = item;
+	}
 
 	/**
 	 * Return the immediate child of this node having a given ID.
