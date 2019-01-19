@@ -16,19 +16,20 @@ import ca.pfv.spmf.patterns.itemset_array_integers_with_count.Itemsets;
 public class MainTestAllAssociationRules_FPGrowth_saveToFile {
 
 	public static void main(String [] arg) throws IOException{
-		//String input = fileToPath("C:\\Users\\Lightning\\Desktop\\contextIGB(comma).txt");
 		//String input = "C:\\Users\\Lightning\\Desktop\\contextIGB(comma)test.txt";
 		//String input = "C:\\Users\\Lightning\\Desktop\\contextIGB(comma).txt";
-		String input = "C:\\Users\\Lightning\\Desktop\\transaction\\transaction.txt";
+		String input = "D:\\Dropbox\\Thesis\\Data\\transaction.txt";
+		//String input = "C:\\Users\\Lightning\\Desktop\\randomdata.txt";
 		String output = "C:\\Users\\Lightning\\Desktop\\output.txt";
-//		String output = "C:\\patterns\\association_rules.txt";
 
 
 		
 		// STEP 1: Applying the FP-GROWTH algorithm to find frequent itemsets
 		double minsupp = 0.1;
+		//double minsupp = 0.03;
+		double pruneConf = 0.6;
 		AlgoFPGrowth fpgrowth = new AlgoFPGrowth();
-		Itemsets patterns = fpgrowth.runAlgorithm(input, null, minsupp);
+		Itemsets patterns = fpgrowth.runAlgorithm(input, null, minsupp, pruneConf);
 		patterns.printItemsets(1);
 		fpgrowth.printStats();
 		int databaseSize = fpgrowth.getDatabaseSize();

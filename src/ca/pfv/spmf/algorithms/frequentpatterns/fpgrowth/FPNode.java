@@ -45,7 +45,7 @@ public class FPNode {
 	/**
 	 * Added to store max confidence value
 	 */
-	public int maxConf = 0;
+	public double maxConf = 0;
 	
 	/**
 	 * constructor

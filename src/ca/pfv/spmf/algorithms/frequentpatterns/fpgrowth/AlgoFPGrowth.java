@@ -84,7 +84,14 @@ public class AlgoFPGrowth {
 	// so that the algorithm can sort the itemset before it is output to file
 	// (when the user choose to output result to file).
 	private String[] itemsetOutputBuffer = null;
-
+	
+	/**
+	 * Editted ver.
+	 */
+	//private final String SEPARATOR = " ";
+	private final String SEPARATOR = ",";
+	private double pruneConf;
+	
 	/**
 	 * Constructor
 	 */
@@ -101,7 +108,7 @@ public class AlgoFPGrowth {
 	 * @return the result if no output file path is provided.
 	 * @throws IOException exception if error reading or writing files
 	 */
-	public Itemsets runAlgorithm(String input, String output, double minsupp) throws FileNotFoundException, IOException {
+	public Itemsets runAlgorithm(String input, String output, double minsupp, double pruneConf) throws FileNotFoundException, IOException {
 		// record start time
 		startTimestamp = System.currentTimeMillis();
 		// number of itemsets found
@@ -126,10 +133,6 @@ public class AlgoFPGrowth {
 		//    key: item   value: support
 		final Map<String, Integer> mapSupport = scanDatabaseToDetermineFrequencyOfSingleItems(input); 
 		
-		/**
-		 * Print support counts of every items
-		 */
-		System.out.println("132:Support Count: \n" + mapSupport);
 		/*for(Map.Entry<String, Integer> entry: mapSupport.entrySet()){
 			System.out.println(entry.getKey() + " " + entry.getValue());
 		}*/
@@ -137,6 +140,11 @@ public class AlgoFPGrowth {
 		// convert the minimum support as percentage to a
 		// relative minimum support
 		this.minSupportRelative = (int) Math.ceil(minsupp * transactionCount);
+		
+		/**
+		 * Print support counts of every items
+		 */
+		System.out.println("132:Support Count: (minsup = " + minSupportRelative + " (" + minsupp + "%))\n" + mapSupport);
 		
 		// (2) Scan the database again to build the initial FP-Tree
 		// Before inserting a transaction in the FPTree, we sort the items
@@ -156,12 +164,14 @@ public class AlgoFPGrowth {
 				continue;
 			}
 			
-			String[] lineSplited = line.split(",");
+			//line = line.trim();
+			
+			String[] lineSplited = line.split(SEPARATOR);
 //			Set<Integer> alreadySeen = new HashSet<Integer>();
 			List<String> transaction = new ArrayList<String>();
 			
 			// for each item in the transaction
-			for(String itemString : lineSplited){  
+			for(String itemString : lineSplited){
 				//Integer item = Integer.parseInt(itemString);
 				// only add items that have the minimum support
 				if(mapSupport.get(itemString) >= minSupportRelative){
@@ -201,7 +211,7 @@ public class AlgoFPGrowth {
 		 * i.e. this is the list of every items that Support > minsup, sorted in order from highest sup to lowest sup. 
 		 */
 		tree.createHeaderList(mapSupport);
-		System.out.println("204:Ordered Items: \n " + tree.headerList + "\n");
+		System.out.println("204:Ordered Items: (" + tree.headerList.size() + " items)\n " + tree.headerList + "\n");
 		
 
 		/**
@@ -213,6 +223,7 @@ public class AlgoFPGrowth {
 		 * Prune the FP-tree
 		 */
 		if(tree.headerList.size() > 0) {
+			this.pruneConf = pruneConf;
 			fptreePruning(tree, mapSupport);
 		}
 		
@@ -247,12 +258,57 @@ public class AlgoFPGrowth {
 	private void fptreePruning(FPTree tree, Map<String, Integer> mapSupport){
 		traverseTree(tree.root, tree, mapSupport);
 		
+		/**
+		 * Try to cut tree branches here
+		 */
+		cutBranches(tree.root, tree);
+		System.out.println("-------------------------");
+		testTraverse(tree.root);
 	}
 	
-	private void calculateMaxConf(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){
+	private void cutBranches(FPNode curNode, FPTree tree){
+		for(int i=0; i<curNode.childs.size(); i++){
+			cutBranches(curNode.childs.get(i), tree);
+		}
+		
+		//Cut a branch
+		System.out.println(curNode.itemID + " " + curNode.maxConf);
+		if(curNode.itemID == "-1"){
+			return;
+		}
+		
+		if(curNode.maxConf != -1 && curNode.maxConf < this.pruneConf){
+			curNode.parent.childs.remove(curNode);
+			//FPNode tempNode = tree.mapItemNodes.get(curNode.itemID);
+		}
+	}
+	
+	private void testTraverse(FPNode curNode){
+		for(int i=0; i<curNode.childs.size(); i++){
+			testTraverse(curNode.childs.get(i));
+		}
+		System.out.println(curNode.itemID + " " + curNode.maxConf);
+	}
+	
+	private void traverseTree(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){		
+		//Traverse recursively to the left-most child node first.
+		//This is Pre-order traversal (read the data in the parent first, then traverse from the left-most child to the right-most child)
+		
+		//Do whatever you want
+		if(curNode.itemID != "-1"){
+			double nodeConf = calculateMaxConf(curNode, tree, mapSupport);
+			curNode.maxConf = nodeConf;
+		}
+		
+		for(int i=0; i<curNode.childs.size(); i++){
+			traverseTree(curNode.childs.get(i), tree, mapSupport);
+		}
+	}
+	
+	private double calculateMaxConf(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){
 		if(curNode.parent.itemID == "-1"){
 			//Cannot find a max confidence of a single item
-			return;
+			return -1;
 		}
 
 		// Store all the nodes in this path up to the root, make it into current subtree
@@ -267,50 +323,24 @@ public class AlgoFPGrowth {
 		//Max Conf = Sup(parents+currentNod)/Sup(x), where x has k-1 items to give min sup, k = number of items in (parents+currentNod)
 		//We want to find max conf
 		
+		//Find the whole subtree's Sup
 		int subtreeSupport = calculateSubtreeSupport(subtree, tree, mapSupport, true);
-		int subtreeMinSup = transactionCount;
 		
-		List<List<FPNode>> subtreeCombination = findK_1Permutation(subtree);
+		//Find the minimum possible Sup of the subtree
+		int subtreeMinSup = transactionCount;
+		List<List<FPNode>> subtreeCombination = findK_1Permutation(subtree); //K-1 subset of this subtree will always have the minimum Sup
 		for(List<FPNode> combi : subtreeCombination){
 			int combiSup = calculateSubtreeSupport(combi, tree, mapSupport, false);
 			subtreeMinSup = (subtreeMinSup < combiSup) ? subtreeMinSup : combiSup;
-			if(subtreeMinSup == 1) break;
-		}
-		//System.out.println(" // minsup = " + subtreeMinSup);
-		System.out.println("Max conf = " + subtreeSupport + "/" + subtreeMinSup);
-		
-	}
-	
-	private void traverseTree(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){		
-		//Traverse recursively to the left-most child node first.
-		//This is Pre-order traversal (read the data in the parent first, then traverse from the left-most child to the right-most child)
-		
-		//Do whatever you want
-		if(curNode.itemID != "-1"){
-			calculateMaxConf(curNode, tree, mapSupport);
-		}
-		
-		for(int i=0; i<curNode.childs.size(); i++){
-			traverseTree(curNode.childs.get(i), tree, mapSupport);
-		}
-	}
-	
-	private List<List<FPNode>> findK_1Permutation(List<FPNode> subtree){
-		List<List<FPNode>> subtreeCombination = new ArrayList<List<FPNode>>();		
-		List<FPNode> combi;
-		
-		for(int i=0; i<subtree.size(); i++){
-			combi = new ArrayList<>();
-			for(FPNode item : subtree){
-				if(item != subtree.get(i)){
-					combi.add(item);
-				}
+			
+			if(subtreeMinSup == 1){//There's no need to calculate Sup anymore if it reaches 1, because that's the minimum value possible
+				break;
 			}
-			subtreeCombination.add(combi);
 		}
-		//System.out.println(subtreeCombination.toString());
+		System.out.print(" // minsup = " + subtreeMinSup);
+		System.out.println(" // Max conf = " + subtreeSupport + "/" + subtreeMinSup);
 		
-		return subtreeCombination;
+		return (double) subtreeSupport / subtreeMinSup;
 	}
 	
 	private int calculateSubtreeSupport(List<FPNode> subtree, FPTree tree, Map<String, Integer> mapSupport, boolean isPrint){
@@ -371,6 +401,25 @@ public class AlgoFPGrowth {
 			System.out.print("sup=" + subtreeSupport);
 		}
 		return subtreeSupport;
+	}
+	
+	private List<List<FPNode>> findK_1Permutation(List<FPNode> subtree){
+		List<List<FPNode>> subtreeCombination = new ArrayList<List<FPNode>>();		
+		List<FPNode> combi;
+		
+		for(int i=0; i<subtree.size(); i++){
+			combi = new ArrayList<>();
+			for(FPNode item : subtree){
+				//Create a subset of items that excludes current item (i.e. k-1 itemset)
+				if(item != subtree.get(i)){
+					combi.add(item);
+				}
+			}
+			subtreeCombination.add(combi);
+		}
+		//System.out.println(subtreeCombination.toString());
+		
+		return subtreeCombination;
 	}
 	
 	/**
@@ -575,7 +624,7 @@ public class AlgoFPGrowth {
 			}
 			
 			// split the line into items
-			String[] lineSplited = line.split(",");
+			String[] lineSplited = line.split(SEPARATOR);
 			// for each item
 			for(String itemString : lineSplited){  
 				// increase the support count of the item
