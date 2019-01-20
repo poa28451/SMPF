@@ -273,13 +273,21 @@ public class AlgoFPGrowth {
 		
 		//Cut a branch
 		System.out.println(curNode.itemID + " " + curNode.maxConf);
-		if(curNode.itemID == "-1"){
+		if(curNode.itemID == "-1"){//Ignore the node if it's the root
 			return;
 		}
 		
+		//If it's not the upper most node (node that's one level next to root) and its maxConf is lower than the specified Conf from user)
 		if(curNode.maxConf != -1 && curNode.maxConf < this.pruneConf){
-			curNode.parent.childs.remove(curNode);
-			//FPNode tempNode = tree.mapItemNodes.get(curNode.itemID);
+			curNode.parent.childs.remove(curNode);//Remove the node from the tree
+			FPNode tempNode = tree.mapItemNodes.get(curNode.itemID);
+			while(tempNode.nodeLink != null){
+				if(tempNode.nodeLink == curNode){//Also remove the node from the linked list of nodes with the same item ID
+					tempNode.nodeLink = curNode.nodeLink;
+					break;
+				}
+				tempNode = tempNode.nodeLink;
+			}
 		}
 	}
 	
