@@ -18,18 +18,19 @@ public class MainTestAllAssociationRules_FPGrowth_saveToFile {
 	public static void main(String [] arg) throws IOException{
 		//String input = "C:\\Users\\Lightning\\Desktop\\contextIGB(comma)test.txt";
 		//String input = "C:\\Users\\Lightning\\Desktop\\contextIGB(comma).txt";
-		String input = "D:\\Dropbox\\Thesis\\Data\\transaction.txt";
-		//String input = "C:\\Users\\Lightning\\Desktop\\randomdata.txt";
-		String output = "C:\\Users\\Lightning\\Desktop\\output.txt";
+		//String input = "D:\\Dropbox\\Thesis\\Data\\transaction.txt"; String separator = ","; double minsupp = 0.1;
+		String input = "C:\\Users\\Lightning\\Desktop\\randomdata.txt"; String separator = " "; double minsupp = 0.03;
+		String output = "C:\\Users\\Lightning\\Desktop\\output2.txt";
 
-
+		//boolean isPrune = false;
+		boolean isPrune = true;
+		double pruneConf = 0.5;
 		
 		// STEP 1: Applying the FP-GROWTH algorithm to find frequent itemsets
-		double minsupp = 0.1;
+		//double minsupp = 0.1;
 		//double minsupp = 0.03;
-		double pruneConf = 0.6;
 		AlgoFPGrowth fpgrowth = new AlgoFPGrowth();
-		Itemsets patterns = fpgrowth.runAlgorithm(input, null, minsupp, pruneConf);
+		Itemsets patterns = fpgrowth.runAlgorithm(input, null, minsupp, pruneConf, separator, isPrune);
 		patterns.printItemsets(1);
 		fpgrowth.printStats();
 		int databaseSize = fpgrowth.getDatabaseSize();

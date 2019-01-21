@@ -88,8 +88,7 @@ public class AlgoFPGrowth {
 	/**
 	 * Editted ver.
 	 */
-	//private final String SEPARATOR = " ";
-	private final String SEPARATOR = ",";
+	private String SEPARATOR;
 	private double pruneConf;
 	
 	/**
@@ -108,11 +107,17 @@ public class AlgoFPGrowth {
 	 * @return the result if no output file path is provided.
 	 * @throws IOException exception if error reading or writing files
 	 */
-	public Itemsets runAlgorithm(String input, String output, double minsupp, double pruneConf) throws FileNotFoundException, IOException {
+	public Itemsets runAlgorithm(String input, String output, double minsupp, double pruneConf, String separator, boolean isPrune) throws FileNotFoundException, IOException {
 		// record start time
 		startTimestamp = System.currentTimeMillis();
 		// number of itemsets found
 		itemsetCount = 0;
+		
+		/**
+		 * Editted ver.
+		 */
+		this.SEPARATOR = separator;
+		this.pruneConf = pruneConf;
 		
 		//initialize tool to record memory usage
 		MemoryLogger.getInstance().reset();
@@ -144,7 +149,7 @@ public class AlgoFPGrowth {
 		/**
 		 * Print support counts of every items
 		 */
-		System.out.println("132:Support Count: (minsup = " + minSupportRelative + " (" + minsupp + "%))\n" + mapSupport);
+		System.out.println("152:Support Count: (minsup = " + minSupportRelative + " (" + minsupp + "%))\n" + mapSupport);
 		
 		// (2) Scan the database again to build the initial FP-Tree
 		// Before inserting a transaction in the FPTree, we sort the items
@@ -211,7 +216,7 @@ public class AlgoFPGrowth {
 		 * i.e. this is the list of every items that Support > minsup, sorted in order from highest sup to lowest sup. 
 		 */
 		tree.createHeaderList(mapSupport);
-		System.out.println("204:Ordered Items: (" + tree.headerList.size() + " items)\n " + tree.headerList + "\n");
+		System.out.println("219:Ordered Items: (" + tree.headerList.size() + " items)\n " + tree.headerList + "\n");
 		
 
 		/**
@@ -222,8 +227,8 @@ public class AlgoFPGrowth {
 		/**
 		 * Prune the FP-tree
 		 */
-		if(tree.headerList.size() > 0) {
-			this.pruneConf = pruneConf;
+		//testTraverse(tree.root);
+		if(isPrune && tree.headerList.size() > 0) {
 			fptreePruning(tree, mapSupport);
 		}
 		
@@ -266,36 +271,82 @@ public class AlgoFPGrowth {
 		testTraverse(tree.root);
 	}
 	
-	private void cutBranches(FPNode curNode, FPTree tree){
+	private boolean cutBranches(FPNode curNode, FPTree tree){
+		boolean isNodeDeleted = false;
+		
 		for(int i=0; i<curNode.childs.size(); i++){
-			cutBranches(curNode.childs.get(i), tree);
+			boolean isChildDeleted = cutBranches(curNode.childs.get(i), tree);
+			if(isChildDeleted){
+				//The reason that I don't directly remove the node from the parent is because
+				//	it'll make the pointer (int i) skip the next child since the next child
+				//	will be moved to position i instead
+				curNode.childs.remove(i);
+				i--;
+			}
 		}
 		
 		//Cut a branch
-		System.out.println(curNode.itemID + " " + curNode.maxConf);
 		if(curNode.itemID == "-1"){//Ignore the node if it's the root
-			return;
+			return isNodeDeleted;
 		}
 		
-		//If it's not the upper most node (node that's one level next to root) and its maxConf is lower than the specified Conf from user)
-		if(curNode.maxConf != -1 && curNode.maxConf < this.pruneConf){
-			curNode.parent.childs.remove(curNode);//Remove the node from the tree
-			FPNode tempNode = tree.mapItemNodes.get(curNode.itemID);
+		//If it's a leaf (node without child) and its maxConf is lower than the specified Conf from user)
+		//if(curNode.maxConf != -1 && curNode.childs.size() == 0 && curNode.maxConf <= this.pruneConf){
+		if(curNode.childs.size() == 0 && curNode.maxConf <= this.pruneConf){
+			System.out.println(curNode.itemID + " " + curNode.maxConf);
+			isNodeDeleted = true;//Flag to indicate that the node has been removed
+			cutNode(curNode, tree);//Remove the node from the tree
+		}
+		
+		return isNodeDeleted;
+	}
+	
+	private void cutNode(FPNode node, FPTree tree){
+		//node.parent.childs.remove(node);//Remove the node from the tree
+		FPNode tempNode = tree.mapItemNodes.get(node.itemID);
+		
+		/*while(tempNode != null){
+			System.out.print(tempNode.itemID + "/" + tempNode.maxConf + " ");
+			tempNode = tempNode.nodeLink;
+		}
+		System.out.println();
+		tempNode = tree.mapItemNodes.get(node.itemID);*/
+		
+		if(tempNode == node){//Also remove the node from the linked list of nodes with the same item ID
+			tree.mapItemNodes.replace(tempNode.itemID, tempNode.nodeLink);//In case if it's the head of the list
+		} else{
 			while(tempNode.nodeLink != null){
-				if(tempNode.nodeLink == curNode){//Also remove the node from the linked list of nodes with the same item ID
-					tempNode.nodeLink = curNode.nodeLink;
+				if(tempNode.nodeLink == node){
+					tempNode.nodeLink = node.nodeLink;
 					break;
 				}
 				tempNode = tempNode.nodeLink;
 			}
 		}
+		
+		/*tempNode = tree.mapItemNodes.get(node.itemID);
+		while(tempNode != null){
+			System.out.print(tempNode.itemID + "/" + tempNode.maxConf + " ");
+			tempNode = tempNode.nodeLink;
+		}
+		System.out.println();*/
 	}
 	
 	private void testTraverse(FPNode curNode){
+		if(curNode.itemID != "-1"){
+			FPNode temp = curNode;
+			System.out.print(curNode.itemID);
+			while(temp.parent != null && temp.parent.itemID != "-1"){
+				temp = temp.parent;
+				System.out.print(" > " + temp.itemID);
+			}
+		}
+		System.out.println();
+		
 		for(int i=0; i<curNode.childs.size(); i++){
 			testTraverse(curNode.childs.get(i));
 		}
-		System.out.println(curNode.itemID + " " + curNode.maxConf);
+		//System.out.println(curNode.itemID + " " + curNode.maxConf);
 	}
 	
 	private void traverseTree(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){		
@@ -306,6 +357,7 @@ public class AlgoFPGrowth {
 		if(curNode.itemID != "-1"){
 			double nodeConf = calculateMaxConf(curNode, tree, mapSupport);
 			curNode.maxConf = nodeConf;
+			System.out.println(" (" + nodeConf + "%)");
 		}
 		
 		for(int i=0; i<curNode.childs.size(); i++){
@@ -316,6 +368,7 @@ public class AlgoFPGrowth {
 	private double calculateMaxConf(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){
 		if(curNode.parent.itemID == "-1"){
 			//Cannot find a max confidence of a single item
+			System.out.print(curNode.itemID);
 			return -1;
 		}
 
@@ -346,7 +399,7 @@ public class AlgoFPGrowth {
 			}
 		}
 		System.out.print(" // minsup = " + subtreeMinSup);
-		System.out.println(" // Max conf = " + subtreeSupport + "/" + subtreeMinSup);
+		System.out.print(" // Max conf = " + subtreeSupport + "/" + subtreeMinSup);
 		
 		return (double) subtreeSupport / subtreeMinSup;
 	}
