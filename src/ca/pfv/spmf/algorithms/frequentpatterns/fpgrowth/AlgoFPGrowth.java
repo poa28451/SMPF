@@ -149,7 +149,7 @@ public class AlgoFPGrowth {
 		/**
 		 * Print support counts of every items
 		 */
-		System.out.println("152:Support Count: (minsup = " + minSupportRelative + " (" + minsupp + "%))\n" + mapSupport);
+		System.out.println("152:Support Count: (minsup = " + minSupportRelative + " (" + minsupp + "%))\n" + mapSupport.size());
 		
 		// (2) Scan the database again to build the initial FP-Tree
 		// Before inserting a transaction in the FPTree, we sort the items
@@ -216,7 +216,14 @@ public class AlgoFPGrowth {
 		 * i.e. this is the list of every items that Support > minsup, sorted in order from highest sup to lowest sup. 
 		 */
 		tree.createHeaderList(mapSupport);
-		System.out.println("219:Ordered Items: (" + tree.headerList.size() + " items)\n " + tree.headerList + "\n");
+		
+		//System.out.println("219:Ordered Items: (" + tree.headerList.size() + " items)\n " + tree.headerList + "\n");
+		System.out.println("221:Ordered Items: (" + tree.headerList.size() + " items)");
+		System.out.print("[");
+		for(String item : tree.headerList){
+			System.out.print(item + "=" + mapSupport.get(item) + ", ");
+		}
+		System.out.println("]");
 		
 
 		/**
@@ -267,8 +274,9 @@ public class AlgoFPGrowth {
 		 * Try to cut tree branches here
 		 */
 		cutBranches(tree.root, tree);
-		System.out.println("-------------------------");
-		testTraverse(tree.root);
+		//System.out.println("-------------------------");
+		//testTraverse(tree.root);
+		System.out.println(testConfCount(tree.root));
 	}
 	
 	private boolean cutBranches(FPNode curNode, FPTree tree){
@@ -332,6 +340,19 @@ public class AlgoFPGrowth {
 		System.out.println();*/
 	}
 	
+	private double testConfCount(FPNode curNode){
+		double totalConf;
+		if(curNode.maxConf == -1){
+			totalConf = 0;
+		} else{
+			totalConf = curNode.maxConf;
+		}
+		for(int i=0; i<curNode.childs.size(); i++){
+			totalConf += testConfCount(curNode.childs.get(i));
+		}
+		return totalConf;
+	}
+	
 	private void testTraverse(FPNode curNode){
 		if(curNode.itemID != "-1"){
 			FPNode temp = curNode;
@@ -366,9 +387,10 @@ public class AlgoFPGrowth {
 	}
 	
 	private double calculateMaxConf(FPNode curNode, FPTree tree, Map<String, Integer> mapSupport){
+		boolean isPrint = true;
 		if(curNode.parent.itemID == "-1"){
 			//Cannot find a max confidence of a single item
-			System.out.print(curNode.itemID);
+			if(isPrint) System.out.print(curNode.itemID);
 			return -1;
 		}
 
@@ -385,7 +407,7 @@ public class AlgoFPGrowth {
 		//We want to find max conf
 		
 		//Find the whole subtree's Sup
-		int subtreeSupport = calculateSubtreeSupport(subtree, tree, mapSupport, true);
+		int subtreeSupport = calculateSubtreeSupport(subtree, tree, mapSupport, isPrint);
 		
 		//Find the minimum possible Sup of the subtree
 		int subtreeMinSup = transactionCount;
@@ -398,8 +420,11 @@ public class AlgoFPGrowth {
 				break;
 			}
 		}
-		System.out.print(" // minsup = " + subtreeMinSup);
-		System.out.print(" // Max conf = " + subtreeSupport + "/" + subtreeMinSup);
+		
+		if(isPrint){
+			System.out.print(" // minsup = " + subtreeMinSup);
+			System.out.print(" // Max conf = " + subtreeSupport + "/" + subtreeMinSup);
+		}
 		
 		return (double) subtreeSupport / subtreeMinSup;
 	}
